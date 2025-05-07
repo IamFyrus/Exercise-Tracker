@@ -13,7 +13,7 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html')
 });
 
-mongoose.connect('mongodb+srv://cyrusazad2442:678Triple98212!@iamfyrus.ipjv5kz.mongodb.net/?retryWrites=true&w=majority&appName=IamFyrus', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true }
