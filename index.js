@@ -31,12 +31,9 @@ const User = mongoose.model('User', userSchema)
 const Exercise = mongoose.model('Exercise', exerciseSchema)
 
 
-app.post('/api/users', (req, res) => {
-  console.log(req.body)
-  res.json({hey: 'hey'})
-})
 
-/*app.get('/api/users', (req, res) => {
+
+app.get('/api/users', (req, res) => {
   const users =  User.find({}, 'username _id')
   res.json(users)
 })
@@ -70,7 +67,7 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
   }
 })
 
-// 4. GET /api/users/:_id/logs => Retrieve user exercise logs
+
 app.get('/api/users/:_id/logs', async (req, res) => {
   const { from, to, limit } = req.query
   const userId = req.params._id
@@ -81,7 +78,6 @@ app.get('/api/users/:_id/logs', async (req, res) => {
 
     let filter = { userId }
 
-    // Optional date filtering
     if (from || to) {
       filter.date = {}
       if (from) filter.date.$gte = new Date(from)
@@ -110,7 +106,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
   }
 })
 
-*/
+
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
 })
