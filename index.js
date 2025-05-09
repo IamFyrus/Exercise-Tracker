@@ -13,7 +13,18 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html')
 });
 
-mongoose.connect(process.env.MONGO_URI)
+// MongoDB connection with options
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+})
+.then(() => console.log('Connected to MongoDB'))
+.catch(err => {
+  console.error('MongoDB connection error:', err)
+  process.exit(1)
+})
 
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true }
@@ -33,10 +44,14 @@ const Exercise = mongoose.model('Exercise', exerciseSchema)
 app.post('/api/users', async (req, res) => {
   try {
     const { username } = req.body
+    if (!username) {
+      return res.status(400).json({ error: 'Username is required' })
+    }
     const user = new User({ username })
     const savedUser = await user.save()
     res.json({ username: savedUser.username, _id: savedUser._id })
   } catch (err) {
+    console.error('Error creating user:', err)
     res.status(500).json({ error: 'Failed to create user' })
   }
 })
@@ -47,6 +62,7 @@ app.get('/api/users', async (req, res) => {
     const users = await User.find({}, 'username _id')
     res.json(users)
   } catch (err) {
+    console.error('Error fetching users:', err)
     res.status(500).json({ error: 'Failed to fetch users' })
   }
 })
@@ -56,6 +72,10 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
   const userId = req.params._id
 
   try {
+    if (!description || !duration) {
+      return res.status(400).json({ error: 'Description and duration are required' })
+    }
+
     const user = await User.findById(userId)
     if (!user) return res.status(404).json({ error: 'User not found' })
 
@@ -76,6 +96,7 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
       date: savedExercise.date.toDateString()
     })
   } catch (err) {
+    console.error('Error adding exercise:', err)
     res.status(500).json({ error: 'Failed to add exercise' })
   }
 })
@@ -114,8 +135,15 @@ app.get('/api/users/:_id/logs', async (req, res) => {
       log
     })
   } catch (err) {
+    console.error('Error retrieving logs:', err)
     res.status(500).json({ error: 'Failed to retrieve logs' })
   }
+})
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack)
+  res.status(500).json({ error: 'Something broke!' })
 })
 
 const listener = app.listen(process.env.PORT || 3000, () => {
