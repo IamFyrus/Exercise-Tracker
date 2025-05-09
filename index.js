@@ -15,7 +15,6 @@ app.get('/', (req, res) => {
 
 mongoose.connect(process.env.MONGO_URI)
 
-
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true }
 })
@@ -30,12 +29,26 @@ const exerciseSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema)
 const Exercise = mongoose.model('Exercise', exerciseSchema)
 
+// Create new user
+app.post('/api/users', async (req, res) => {
+  try {
+    const { username } = req.body
+    const user = new User({ username })
+    const savedUser = await user.save()
+    res.json({ username: savedUser.username, _id: savedUser._id })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create user' })
+  }
+})
 
-
-
-app.get('/api/users', (req, res) => {
-  const users =  User.find({}, 'username _id')
-  res.json(users)
+// Get all users
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await User.find({}, 'username _id')
+    res.json(users)
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch users' })
+  }
 })
 
 app.post('/api/users/:_id/exercises', async (req, res) => {
@@ -47,7 +60,7 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' })
 
     const exercise = new Exercise({
-      userId,
+      user_id: userId,
       description,
       duration: parseInt(duration),
       date: date ? new Date(date) : new Date()
@@ -67,7 +80,6 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
   }
 })
 
-
 app.get('/api/users/:_id/logs', async (req, res) => {
   const { from, to, limit } = req.query
   const userId = req.params._id
@@ -76,7 +88,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     const user = await User.findById(userId)
     if (!user) return res.status(404).json({ error: 'User not found' })
 
-    let filter = { userId }
+    let filter = { user_id: userId }
 
     if (from || to) {
       filter.date = {}
@@ -105,7 +117,6 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve logs' })
   }
 })
-
 
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
